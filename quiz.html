@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Quiz</title>
+    <link rel="stylesheet" href="css/quiz.css">
+    <style>
+        .topnav {
+        overflow: hidden;
+        background-color: #333;
+        padding-left: auto;
+        padding-right:auto;
+      }
+      
+      .topnav a {
+        float: left;
+        color: #f2f2f2;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+        font-size: 17px;
+      }
+      
+      .topnav a:hover {
+        background-color: #ddd;
+        color: black;
+      }
+      
+      .topnav a.active {
+        background-color: #04AA6D;
+        color: white;
+      }
+
+      .flag-btn {
+            background-color: #ffc107;
+            margin-top: 10px;
+        }
+
+        .flag-btn.flagged {
+            background-color: #e0a800;
+        }
+
+        #flagged-questions {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .flagged-item {
+            cursor: pointer;
+            margin: 5px 0;
+            color: #007bff;
+        }
+
+        .flagged-item:hover {
+            text-decoration: underline;
+        }
+      
+            </style>
+     
+    </head>
+    <body>
+      
+        <div class="topnav">
+            <a  href="homePage.html">Home</a>
+            <a class="active" href="create-quiz.html">Create Quiz</a>
+            <a href="login.php">Logout</a>
+            <a href="#about">About</a>
+          </div>
+    
+
+<h1>Quiz: <span id="quiz-title"></span></h1>
+<p id="quiz-description"></p>
+
+<form id="quiz-form">
+    <div id="questions-container">
+        <!-- Questions will be dynamically inserted here -->
+    </div>
+    <button type="submit">Submit Quiz</button>
+</form>
+
+<h3>Flagged Questions</h3>
+<div id="flagged-questions">
+    <p>No questions flagged.</p>
+</div>
+
+
+<script>
+
+     let flaggedQuestions = [];
+
+
+    // Function to get the query parameter (quiz ID) from the URL
+    function getQuizId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('quizId');
+    }
+
+    // Function to load the quiz based on the quiz ID
+    function loadQuiz() {
+        const quizId = getQuizId();
+        if (!quizId) {
+            alert('Quiz ID not found.');
+            return;
+        }
+
+          // Fetch the quiz data from the server
+          fetch(`server/get_quiz.php?quizId=${quizId}`)
+            .then(response => response.json())
+            .then(quizData => {
+                // Display the quiz title and description
+                document.getElementById('quiz-title').textContent = quizData.quiz_title;
+                document.getElementById('quiz-description').textContent = quizData.description;
+
+                // Display the questions and choices
+                const questionsContainer = document.getElementById('questions-container');
+                quizData.questions.forEach((question, questionIndex) => {
+                    const questionBlock = document.createElement('div');
+                    questionBlock.classList.add('question');
+                    questionBlock.setAttribute('data-question-index', questionIndex);
+
+                    questionBlock.innerHTML = `<h3>Q${questionIndex + 1}: ${question.text}</h3>`;
+                    
+                    const choicesContainer = document.createElement('div');
+                    choicesContainer.classList.add('choices');
+
+                    question.choices.forEach((choice, choiceIndex) => {
+                        const choiceLabel = document.createElement('label');
+                        choiceLabel.innerHTML = `
+                            <input type="radio" name="question-${questionIndex}" value="${choiceIndex}" required>
+                            ${choice.text}
+                        `;
+                        choicesContainer.appendChild(choiceLabel);
+                    });
+
+                    // Add a "Flag Question" button
+                    const flagButton = document.createElement('button');
+                    flagButton.classList.add('flag-btn');
+                    flagButton.textContent = 'Flag Question';
+                    flagButton.onclick = () => toggleFlagQuestion(questionIndex);
+
+                    questionBlock.appendChild(choicesContainer);
+                    questionBlock.appendChild(flagButton);
+                    questionsContainer.appendChild(questionBlock);
+                });
+            })
+        
+    }
+
+
+     // Function to toggle flagging of a question
+    function toggleFlagQuestion(questionIndex) {
+        const questionBlock = document.querySelector(`[data-question-index="${questionIndex}"]`);
+        const flagButton = questionBlock.querySelector('.flag-btn');
+
+        if (flaggedQuestions.includes(questionIndex)) {
+            // Unflag the question
+            flaggedQuestions = flaggedQuestions.filter(q => q !== questionIndex);
+            flagButton.classList.remove('flagged');
+            flagButton.textContent = 'Flag Question';
+        } else {
+            // Flag the question
+            flaggedQuestions.push(questionIndex);
+            flagButton.classList.add('flagged');
+            flagButton.textContent = 'Unflag Question';
+        }
+
+        updateFlaggedQuestions();
+    }
+
+    // Function to update the flagged questions panel
+    function updateFlaggedQuestions() {
+        const flaggedContainer = document.getElementById('flagged-questions');
+        flaggedContainer.innerHTML = '';
+
+        if (flaggedQuestions.length === 0) {
+            flaggedContainer.innerHTML = '<p>No questions flagged.</p>';
+        } else {
+            flaggedQuestions.forEach(questionIndex => {
+                const flaggedItem = document.createElement('div');
+                flaggedItem.classList.add('flagged-item');
+                flaggedItem.textContent = `Go to Question ${questionIndex + 1}`;
+                flaggedItem.onclick = () => scrollToQuestion(questionIndex);
+                flaggedContainer.appendChild(flaggedItem);
+            });
+        }
+    }
+
+    // Function to scroll to a flagged question
+    function scrollToQuestion(questionIndex) {
+        const questionBlock = document.querySelector(`[data-question-index="${questionIndex}"]`);
+        if (questionBlock) {
+            window.scrollTo({
+                top: questionBlock.offsetTop - 20,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    // Load the quiz when the page loads
+    window.onload = loadQuiz;
+
+    // Handle form submission (calculate the quiz score)
+    document.getElementById('quiz-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the form from submitting normally
+
+        const quizId = getQuizId();
+        const formData = new FormData(this);
+
+        // Submit the user's answers to the server for scoring
+        fetch(`server/submit_quiz.php?quizId=${quizId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            alert(`Your score: ${result.score}/${result.total}`);
+        })
+
+    });
+</script>
+
+</body>
+</html>

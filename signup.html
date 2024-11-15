@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Website</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Welcome to Quizify</h1>
+        <nav>
+
+        </nav>
+    </header>
+    <main>
+     <div class = "container">
+        <form id = "signup-form" method="POST" action="includes/signup.php">
+            <h1>Create Account</h1>
+            <label for = "username">Username</label>
+            <input type = "text" id = "username" name = "username"  required/>
+
+            <label for = "password">Password</label>
+            <input type = "text" id = "password" name="password"  required/>
+
+            <button type = "submit" id = "submit" value = "signup-submit">Continue</button>
+            <p>Already have an account? <a href="login.php">Log in</a></p>
+        </form>
+    </div>
+    </main>
+    <script src="js/script.js"></script>
+</body>
+</html>
