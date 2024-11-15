@@ -27,7 +27,7 @@
             <input type = "text" id = "password" name="password"  required/>
 
             <button type = "submit" id = "submit" value = "submit" name = "login-submit">Log in</button>
-            <p><a href="index.html">Create Acount</a></p>
+            <p><a href="signup.html">Create Acount</a></p>
         </form>
     </div>
     </main>
